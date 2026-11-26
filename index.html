@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="description" content="Danh sách quản lý trạng thái Out của người chơi">
+    <title>Danh Sách Tích Chọn Out</title>
+    <!-- Tải Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Inter hỗ trợ tiếng Việt rõ nét -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'media',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .player-card {
+            contain: layout paint;
+        }
+        @media (max-width: 640px) {
+            .player-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-zinc-950 dark:text-zinc-100 antialiased pb-16">
+
+    <!-- Container chính gọn gàng, tối ưu cho cả điện thoại và máy tính -->
+    <main class="max-w-2xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 space-y-5">
+
+        <!-- =============================================================== -->
+        <!-- 1. TIÊU ĐỀ GỌN NHẸ                                              -->
+        <!-- =============================================================== -->
+        <header class="flex items-center justify-between gap-3">
+            <div>
+                <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                    Danh Sách Tích Chọn Out
+                </h1>
+                <p class="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 mt-0.5">
+                    Bấm ô tích hoặc tên người chơi để đánh dấu Đã Out
+                </p>
+            </div>
+        </header>
+
+        <!-- =============================================================== -->
+        <!-- 2. THANH THỐNG KÊ & BỘ LỌC NHANH                                -->
+        <!-- =============================================================== -->
+        <section class="bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 rounded-2xl p-4 shadow-sm space-y-3.5">
+            <!-- Thống kê: Tổng số | Còn lại | Đã Out -->
+            <div class="grid grid-cols-3 divide-x divide-slate-200 dark:divide-zinc-800 text-center">
+                <div class="px-2">
+                    <div class="text-xs font-medium text-slate-500 dark:text-zinc-400">Tổng số</div>
+                    <div id="statTotal" class="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white mt-0.5">0</div>
+                </div>
+                <div class="px-2">
+                    <div class="text-xs font-medium text-emerald-600 dark:text-emerald-400">Còn lại</div>
+                    <div id="statRemaining" class="text-xl sm:text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5">0</div>
+                </div>
+                <div class="px-2">
+                    <div class="text-xs font-medium text-rose-600 dark:text-rose-400">Đã Out</div>
+                    <div id="statOut" class="text-xl sm:text-2xl font-extrabold text-rose-600 dark:text-rose-400 mt-0.5">0</div>
+                </div>
+            </div>
+
+            <!-- Bộ lọc nhanh: Tất cả / Chưa Out / Đã Out -->
+            <div class="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-zinc-950 border border-slate-200/70 dark:border-zinc-800/80" role="tablist">
+                <button type="button" data-filter="all"
+                    class="filter-btn py-2 px-2.5 rounded-lg text-xs sm:text-sm font-semibold transition">
+                    Tất cả
+                </button>
+                <button type="button" data-filter="active"
+                    class="filter-btn py-2 px-2.5 rounded-lg text-xs sm:text-sm font-semibold transition">
+                    Chưa Out
+                </button>
+                <button type="button" data-filter="out"
+                    class="filter-btn py-2 px-2.5 rounded-lg text-xs sm:text-sm font-semibold transition">
+                    Đã Out
+                </button>
+            </div>
+        </section>
+
+        <!-- =============================================================== -->
+        <!-- 3. THÊM NGƯỜI CHƠI & THAO TÁC NHANH                             -->
+        <!-- =============================================================== -->
+        <section class="bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 rounded-2xl p-4 shadow-sm space-y-3">
+            <div class="relative">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m1.35-5.15a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"/>
+                </svg>
+                <input id="inputSearchPlayer" type="search"
+                    placeholder="Tìm người chơi..."
+                    class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-300 dark:border-zinc-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 outline-none transition">
+            </div>
+
+            <!-- Nhập nhanh 1 người + Nút Thêm nhiều người -->
+            <div class="flex flex-col sm:flex-row gap-2">
+                <div class="flex flex-1 gap-2">
+                    <input id="inputNewPlayer" type="text" maxlength="40"
+                        placeholder="Nhập tên người chơi (nhấn Enter)..."
+                        class="flex-1 min-w-0 px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-300 dark:border-zinc-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 outline-none transition">
+                    <button id="btnAddSingle" type="button"
+                        class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition active:scale-95 shrink-0">
+                        Thêm
+                    </button>
+                </div>
+
+                <button id="btnOpenBulkModal" type="button"
+                    class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 font-semibold text-sm transition active:scale-95 shrink-0">
+                    + Thêm nhiều người
+                </button>
+            </div>
+
+            <!-- Hai nút thao tác nhanh: Bỏ tích tất cả & Khôi phục danh sách mẫu -->
+            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-zinc-800/80">
+                <button id="btnUncheckAll" type="button"
+                    class="py-2.5 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-semibold text-xs sm:text-sm transition active:scale-95">
+                    Bỏ tích tất cả
+                </button>
+                <button id="btnRestoreSample" type="button"
+                    class="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 font-semibold text-xs sm:text-sm transition active:scale-95">
+                    Khôi phục danh sách mẫu
+                </button>
+            </div>
+        </section>
+
+        <!-- =============================================================== -->
+        <!-- 4. DANH SÁCH NGƯỜI CHƠI TÍCH CHỌN                               -->
+        <!-- =============================================================== -->
+        <section class="space-y-2.5">
+            <div id="playerListContainer" class="space-y-2">
+                <!-- Các thẻ người chơi được render tại đây -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- =================================================================== -->
+    <!-- MODAL NHẬP NHIỀU NGƯỜI CHƠI (MỖI TÊN MỘT DÒNG)                      -->
+    <!-- =================================================================== -->
+    <div id="bulkAddModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div class="w-full max-w-md bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-2xl p-5 shadow-xl space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                    Thêm nhiều người chơi
+                </h2>
+                <button id="btnCloseBulkModal" type="button" aria-label="Đóng"
+                    class="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition">
+                    ✕
+                </button>
+            </div>
+
+            <p class="text-xs sm:text-sm text-slate-500 dark:text-zinc-400">
+                Nhập danh sách tên người chơi, mỗi tên một dòng:
+            </p>
+
+            <textarea id="bulkPlayersTextarea" rows="6"
+                placeholder="Gia Huy&#10;Khánh Linh&#10;Đức Mạnh&#10;Ngọc Hân"
+                class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-300 dark:border-zinc-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 outline-none resize-none"></textarea>
+
+            <div class="flex items-center justify-between gap-3">
+                <span id="bulkCountPreview" class="text-xs font-medium text-slate-500 dark:text-zinc-400">
+                    0 tên hợp lệ
+                </span>
+                <div class="flex items-center gap-2">
+                    <button id="btnCancelBulk" type="button"
+                        class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-xs sm:text-sm font-semibold text-slate-700 dark:text-zinc-300 transition">
+                        Hủy
+                    </button>
+                    <button id="btnConfirmBulk" type="button"
+                        class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-semibold transition active:scale-95">
+                        Thêm danh sách
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- THÔNG BÁO NHẸ (HỖ TRỢ HOÀN TÁC KHI XÓA / KHÔI PHỤC)                 -->
+    <!-- =================================================================== -->
+    <div id="toastContainer" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md pointer-events-none flex justify-center"></div>
+
+    <!-- =================================================================== -->
+    <!-- LOGIC QUẢN LÝ DANH SÁCH TÍCH CHỌN & LOCALSTORAGE                    -->
+    <!-- =================================================================== -->
+    <script>
+        (function () {
+            'use strict';
+
+            const STORAGE_KEY = 'out_checklist_players_v1';
+
+            // Danh sách mẫu mặc định gồm "Tôi (Bạn)" và 5 người chơi khác
+            function createSamplePlayers() {
+                return [
+                    { id: 'p_me', name: 'Tôi (Bạn)', isMe: true, isOut: false },
+                    { id: 'p_1', name: 'Minh Anh', isMe: false, isOut: false },
+                    { id: 'p_2', name: 'Hoàng Nam', isMe: false, isOut: false },
+                    { id: 'p_3', name: 'Thảo Vy', isMe: false, isOut: false },
+                    { id: 'p_4', name: 'Quốc Bảo', isMe: false, isOut: false },
+                    { id: 'p_5', name: 'Linh Chi', isMe: false, isOut: false }
+                ];
+            }
+
+            // Trạng thái ứng dụng tối giản
+            const state = {
+                players: [],
+                filter: 'all', // 'all' | 'active' | 'out'
+                search: ''
+            };
+
+            // Lưu danh sách vào localStorage
+            function savePlayers() {
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.players));
+                } catch (err) {
+                    console.error('Không thể lưu vào localStorage:', err);
+                }
+            }
+
+            // Tải danh sách từ localStorage hoặc khởi tạo dữ liệu mẫu
+            function loadPlayers() {
+                try {
+                    const raw = localStorage.getItem(STORAGE_KEY);
+                    if (raw !== null) {
+                        const parsed = JSON.parse(raw);
+                        if (Array.isArray(parsed)) {
+                            state.players = parsed.map((item, idx) => ({
+                                id: String(item.id || ('p_' + idx + '_' + Date.now())),
+                                name: String(item.name || 'Người chơi'),
+                                isMe: Boolean(item.isMe),
+                                isOut: Boolean(item.isOut)
+                            }));
+                            return;
+                        }
+                    }
+                } catch (err) {
+                    console.error('Lỗi đọc localStorage:', err);
+                }
+
+                state.players = createSamplePlayers();
+                savePlayers();
+            }
+
+            // Escape HTML an toàn khi hiển thị tên người chơi
+            function escapeHtml(str) {
+                const div = document.createElement('div');
+                div.textContent = str ?? '';
+                return div.innerHTML;
+            }
+
+            // Hiển thị thông báo ngắn gọn ở cuối màn hình (kèm nút Hoàn tác nếu cần)
+            let toastTimeout = null;
+            function showToast(message, onUndo = null) {
+                const container = document.getElementById('toastContainer');
+                container.innerHTML = '';
+
+                const toast = document.createElement('div');
+                toast.className = 'pointer-events-auto flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-slate-900 dark:bg-zinc-800 text-white border border-slate-700 dark:border-zinc-700 shadow-lg text-xs sm:text-sm font-medium';
+
+                const textSpan = document.createElement('span');
+                textSpan.textContent = message;
+                toast.appendChild(textSpan);
+
+                if (typeof onUndo === 'function') {
+                    const undoBtn = document.createElement('button');
+                    undoBtn.type = 'button';
+                    undoBtn.textContent = 'Hoàn tác';
+                    undoBtn.className = 'px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-white text-xs font-bold shrink-0 transition';
+                    undoBtn.addEventListener('click', () => {
+                        onUndo();
+                        container.innerHTML = '';
+                    });
+                    toast.appendChild(undoBtn);
+                }
+
+                container.appendChild(toast);
+
+                if (toastTimeout) clearTimeout(toastTimeout);
+                toastTimeout = setTimeout(() => {
+                    if (container.contains(toast)) {
+                        container.removeChild(toast);
+                    }
+                }, onUndo ? 4000 : 2200);
+            }
+
+            // =================================================================
+            // CÁC THAO TÁC TRÊN DANH SÁCH
+            // =================================================================
+            function commitAndRender() {
+                savePlayers();
+                render();
+            }
+
+            // Chuyển trạng thái Đã Out / Chưa Out
+            function togglePlayerOut(playerId) {
+                const player = state.players.find(p => p.id === playerId);
+                if (!player) return;
+                player.isOut = !player.isOut;
+                commitAndRender();
+            }
+
+            // Gắn / bỏ nhãn "★ Tôi" nhẹ nhàng (không kích hoạt cảnh báo)
+            function togglePlayerMe(playerId) {
+                const player = state.players.find(p => p.id === playerId);
+                if (!player) return;
+                player.isMe = !player.isMe;
+                commitAndRender();
+            }
+
+            // Di chuyển vị trí người chơi lên / xuống
+            function movePlayer(index, direction) {
+                const targetIndex = index + direction;
+                if (index < 0 || index >= state.players.length) return;
+                if (targetIndex < 0 || targetIndex >= state.players.length) return;
+
+                const temp = state.players[index];
+                state.players[index] = state.players[targetIndex];
+                state.players[targetIndex] = temp;
+                commitAndRender();
+            }
+
+            // Xóa người chơi khỏi danh sách
+            function deletePlayer(playerId) {
+                const idx = state.players.findIndex(p => p.id === playerId);
+                if (idx === -1) return;
+
+                const backup = state.players.map(p => ({ ...p }));
+                const removed = state.players[idx];
+                state.players.splice(idx, 1);
+                commitAndRender();
+
+                showToast(`Đã xóa "${removed.name}"`, () => {
+                    state.players = backup;
+                    commitAndRender();
+                });
+            }
+
+            // Thêm 1 người chơi
+            function addSinglePlayer(rawName) {
+                const name = rawName.trim();
+                if (!name) return false;
+
+                state.players.push({
+                    id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                    name,
+                    isMe: false,
+                    isOut: false
+                });
+                commitAndRender();
+                return true;
+            }
+
+            // Bỏ tích tất cả để bắt đầu ván mới
+            function uncheckAllPlayers() {
+                if (state.players.length === 0) return;
+                const hasChecked = state.players.some(p => p.isOut);
+                if (!hasChecked) {
+                    showToast('Tất cả hiện đều đang chưa Out');
+                    return;
+                }
+
+                const backup = state.players.map(p => ({ ...p }));
+                state.players.forEach(p => {
+                    p.isOut = false;
+                });
+                commitAndRender();
+
+                showToast('Đã bỏ tích tất cả người chơi', () => {
+                    state.players = backup;
+                    commitAndRender();
+                });
+            }
+
+            // Khôi phục danh sách mẫu 6 người chơi
+            function restoreSampleList() {
+                const backup = state.players.map(p => ({ ...p }));
+                state.players = createSamplePlayers();
+                state.filter = 'all';
+                commitAndRender();
+
+                showToast('Đã khôi phục danh sách mẫu', () => {
+                    state.players = backup;
+                    commitAndRender();
+                });
+            }
+
+            // =================================================================
+            // RENDER GIAO DIỆN
+            // =================================================================
+            function render() {
+                const total = state.players.length;
+                const outCount = state.players.filter(p => p.isOut).length;
+                const remainingCount = total - outCount;
+
+                // 1. Cập nhật số liệu thống kê
+                document.getElementById('statTotal').textContent = total;
+                document.getElementById('statRemaining').textContent = remainingCount;
+                document.getElementById('statOut').textContent = outCount;
+
+                // 2. Cập nhật trạng thái nút bộ lọc
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    const isSelected = btn.dataset.filter === state.filter;
+                    if (isSelected) {
+                        btn.className = 'filter-btn py-2 px-2.5 rounded-lg text-xs sm:text-sm font-bold bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-xs transition';
+                    } else {
+                        btn.className = 'filter-btn py-2 px-2.5 rounded-lg text-xs sm:text-sm font-medium text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 transition';
+                    }
+                });
+
+                // 3. Lọc danh sách hiển thị
+                const filteredPlayers = state.players.filter(player => {
+                    if (state.filter === 'active') return !player.isOut;
+                    if (state.filter === 'out') return player.isOut;
+                    return true;
+                }).filter(player => {
+                    const term = state.search.trim().toLocaleLowerCase('vi');
+                    return !term || player.name.toLocaleLowerCase('vi').includes(term);
+                });
+
+                const listContainer = document.getElementById('playerListContainer');
+                listContainer.innerHTML = '';
+
+                if (filteredPlayers.length === 0) {
+                    const emptyText = state.search
+                        ? 'Không tìm thấy người chơi phù hợp.'
+                        : total === 0
+                            ? 'Danh sách đang trống. Hãy thêm người chơi ở ô phía trên.'
+                            : state.filter === 'active'
+                                ? 'Không còn người chơi nào chưa Out.'
+                                : 'Chưa có người chơi nào được tích Đã Out.';
+
+                    listContainer.innerHTML = `
+                        <div class="rounded-2xl border border-dashed border-slate-300 dark:border-zinc-800 bg-white/60 dark:bg-zinc-900/40 p-8 text-center text-sm text-slate-500 dark:text-zinc-400">
+                            ${emptyText}
+                        </div>
+                    `;
+                    return;
+                }
+
+                const isFiltered = state.filter !== 'all';
+
+                filteredPlayers.forEach(player => {
+                    const realIndex = state.players.findIndex(p => p.id === player.id);
+
+                    const card = document.createElement('div');
+                    card.className = `player-card flex flex-wrap sm:flex-nowrap items-center gap-2.5 sm:gap-3 p-3 sm:p-3.5 rounded-2xl border transition-all duration-150 ${
+                        player.isOut
+                            ? 'bg-slate-100/80 dark:bg-zinc-900/45 border-slate-200/80 dark:border-zinc-800/70 opacity-60'
+                            : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 shadow-2xs hover:border-slate-300 dark:hover:border-zinc-700'
+                    }`;
+
+                    card.innerHTML = `
+                        <!-- Ô tích chọn (Checkbox) lớn, dễ bấm -->
+                        <button type="button" data-action="toggle-out"
+                            role="checkbox" aria-checked="${player.isOut}"
+                            aria-label="Đánh dấu ${escapeHtml(player.name)} đã Out"
+                            class="w-11 h-11 rounded-xl border-2 flex items-center justify-center shrink-0 transition active:scale-90 ${
+                                player.isOut
+                                    ? 'bg-rose-600 border-rose-600 text-white'
+                                    : 'bg-slate-50 dark:bg-zinc-950 border-slate-300 dark:border-zinc-600 hover:border-indigo-500 text-transparent'
+                            }">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </button>
+
+                        <!-- Tên người chơi + Nhãn Tôi / Đã Out -->
+                        <div data-action="toggle-out" class="flex-1 min-w-0 cursor-pointer select-none py-1">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-sm sm:text-base font-bold truncate ${
+                                    player.isOut
+                                        ? 'line-through text-slate-500 dark:text-zinc-400'
+                                        : 'text-slate-900 dark:text-white'
+                                }">
+                                    ${escapeHtml(player.name)}
+                                </span>
+
+                                ${player.isMe ? `
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 text-[11px] font-bold">
+                                        ★ Tôi
+                                    </span>
+                                ` : ''}
+
+                                ${player.isOut ? `
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 text-[11px] font-bold">
+                                        Đã Out
+                                    </span>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Nhóm nút phụ: Gắn/bỏ ★ Tôi, Lên/Xuống (↑ ↓), Xóa (×) -->
+                        <div class="player-actions flex items-center gap-1 sm:gap-1.5 shrink-0">
+                            <button type="button" data-action="toggle-me"
+                                title="${player.isMe ? 'Bỏ đánh dấu Tôi' : 'Đánh dấu là Tôi'}"
+                                class="px-2.5 py-2 rounded-xl text-xs font-semibold transition active:scale-95 ${
+                                    player.isMe
+                                        ? 'bg-amber-100/80 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 hover:bg-amber-200/70'
+                                        : 'bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200'
+                                }">
+                                ${player.isMe ? '★ Tôi' : '☆ Tôi'}
+                            </button>
+
+                            <div class="flex items-center">
+                                <button type="button" data-action="move-up"
+                                    ${isFiltered || realIndex === 0 ? 'disabled' : ''}
+                                    title="Di chuyển lên"
+                                    class="w-8 h-9 flex items-center justify-center rounded-lg text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white disabled:opacity-25 disabled:pointer-events-none font-bold text-sm transition">
+                                    ↑
+                                </button>
+                                <button type="button" data-action="move-down"
+                                    ${isFiltered || realIndex === state.players.length - 1 ? 'disabled' : ''}
+                                    title="Di chuyển xuống"
+                                    class="w-8 h-9 flex items-center justify-center rounded-lg text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white disabled:opacity-25 disabled:pointer-events-none font-bold text-sm transition">
+                                    ↓
+                                </button>
+                            </div>
+
+                            <button type="button" data-action="delete"
+                                title="Xóa người chơi"
+                                class="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 font-bold text-lg transition active:scale-90">
+                                ×
+                            </button>
+                        </div>
+                    `;
+
+                    // Bắt sự kiện click trên từng thẻ
+                    card.addEventListener('click', (e) => {
+                        const target = e.target.closest('[data-action]');
+                        if (!target) return;
+                        const action = target.dataset.action;
+
+                        if (action === 'toggle-out') {
+                            togglePlayerOut(player.id);
+                        } else if (action === 'toggle-me') {
+                            togglePlayerMe(player.id);
+                        } else if (action === 'move-up') {
+                            movePlayer(realIndex, -1);
+                        } else if (action === 'move-down') {
+                            movePlayer(realIndex, 1);
+                        } else if (action === 'delete') {
+                            deletePlayer(player.id);
+                        }
+                    });
+
+                    listContainer.appendChild(card);
+                });
+            }
+
+            // =================================================================
+            // GẮN SỰ KIỆN CHO CÁC NÚT ĐIỀU KHIỂN & MODAL
+            // =================================================================
+            function bindEvents() {
+                document.getElementById('inputSearchPlayer').addEventListener('input', (e) => {
+                    state.search = e.target.value;
+                    render();
+                });
+
+                // Bộ lọc nhanh
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        state.filter = btn.dataset.filter;
+                        render();
+                    });
+                });
+
+                // Thêm nhanh 1 người chơi
+                const inputNew = document.getElementById('inputNewPlayer');
+                document.getElementById('btnAddSingle').addEventListener('click', () => {
+                    if (addSinglePlayer(inputNew.value)) {
+                        inputNew.value = '';
+                        inputNew.focus();
+                    } else {
+                        showToast('Vui lòng nhập tên người chơi');
+                        inputNew.focus();
+                    }
+                });
+
+                inputNew.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (addSinglePlayer(inputNew.value)) {
+                            inputNew.value = '';
+                        }
+                    }
+                });
+
+                // Bỏ tích tất cả & Khôi phục danh sách mẫu
+                document.getElementById('btnUncheckAll').addEventListener('click', uncheckAllPlayers);
+                document.getElementById('btnRestoreSample').addEventListener('click', restoreSampleList);
+
+                // Modal Thêm nhiều người
+                const modal = document.getElementById('bulkAddModal');
+                const textarea = document.getElementById('bulkPlayersTextarea');
+                const preview = document.getElementById('bulkCountPreview');
+
+                function parseLines(text) {
+                    return text
+                        .split(/\n+/)
+                        .map(line => line.trim())
+                        .filter(Boolean)
+                        .map(line => line.slice(0, 40));
+                }
+
+                function openModal() {
+                    textarea.value = '';
+                    preview.textContent = '0 tên hợp lệ';
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                    setTimeout(() => textarea.focus(), 40);
+                }
+
+                function closeModal() {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+
+                document.getElementById('btnOpenBulkModal').addEventListener('click', openModal);
+                document.getElementById('btnCloseBulkModal').addEventListener('click', closeModal);
+                document.getElementById('btnCancelBulk').addEventListener('click', closeModal);
+
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) closeModal();
+                });
+
+                textarea.addEventListener('input', () => {
+                    const count = parseLines(textarea.value).length;
+                    preview.textContent = `${count} tên hợp lệ`;
+                });
+
+                document.getElementById('btnConfirmBulk').addEventListener('click', () => {
+                    const names = parseLines(textarea.value);
+                    if (names.length === 0) {
+                        showToast('Vui lòng nhập ít nhất 1 tên người chơi');
+                        textarea.focus();
+                        return;
+                    }
+
+                    names.forEach((name, idx) => {
+                        state.players.push({
+                            id: 'p_' + Date.now() + '_' + idx + '_' + Math.random().toString(36).slice(2, 6),
+                            name,
+                            isMe: false,
+                            isOut: false
+                        });
+                    });
+
+                    closeModal();
+                    commitAndRender();
+                    showToast(`Đã thêm ${names.length} người chơi`);
+                });
+            }
+
+            // Khởi chạy ứng dụng
+            window.addEventListener('DOMContentLoaded', () => {
+                loadPlayers();
+                bindEvents();
+                render();
+            });
+        })();
+    </script>
+</body>
+</html>
